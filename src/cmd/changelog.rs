@@ -1,9 +1,9 @@
-use std::{cmp::Ordering, collections::HashMap, str::FromStr};
+use std::{cmp::Ordering, collections::HashMap, convert::TryFrom};
 
 use chrono::NaiveDate;
 use git2::Time;
 use regex::Regex;
-use semver::Version;
+use crate::semver::SemVer;
 
 use crate::{
     cli::ChangelogCommand,
@@ -21,7 +21,7 @@ use crate::{
 };
 
 #[derive(Debug)]
-struct Rev<'a>(&'a str, Option<&'a Version>);
+struct Rev<'a>(&'a str, Option<&'a SemVer>);
 
 impl<'a> From<&'a VersionAndTag> for Rev<'a> {
     fn from(tav: &'a VersionAndTag) -> Self {
@@ -255,7 +255,7 @@ impl Command for ChangelogCommand {
         let transformer = ChangeLogTransformer::new(&config, &helper)?;
         match helper.find_last_version(rev)? {
             Some(last_version) => {
-                let semver = Version::from_str(rev.trim_start_matches(&self.prefix));
+                let semver = SemVer::try_from(rev.trim_start_matches(&self.prefix));
                 let from_rev = if let Ok(ref semver) = &semver {
                     if helper.same_commit(rev, last_version.tag.as_str()) {
                         Rev(last_version.tag.as_str(), Some(semver))

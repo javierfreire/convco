@@ -1,7 +1,7 @@
-use std::{cmp::Ordering, collections::HashMap};
+use std::{cmp::Ordering, collections::HashMap, convert::TryFrom};
 
 use git2::{Commit, Error, Object, Oid, Repository, Revwalk};
-use semver::Version;
+use crate::semver::SemVer;
 
 /// git helper for common operations
 pub(crate) struct GitHelper {
@@ -12,7 +12,7 @@ pub(crate) struct GitHelper {
 #[derive(Clone, Debug)]
 pub(crate) struct VersionAndTag {
     pub(crate) tag: String,
-    pub(crate) version: Version,
+    pub(crate) version: SemVer,
 }
 
 impl Eq for VersionAndTag {}
@@ -108,7 +108,7 @@ fn make_oid_version_map(repo: &Repository, prefix: &str) -> HashMap<Oid, Version
     let mut map = HashMap::new();
     for tag in tags.iter().flatten().filter(|tag| tag.starts_with(prefix)) {
         if let Ok(oid) = repo.revparse_single(tag).map(object_to_target_commit_id) {
-            if let Ok(version) = Version::parse(tag.trim_start_matches(prefix)) {
+            if let Ok(version) = SemVer::try_from(tag.trim_start_matches(prefix)) {
                 map.insert(
                     oid,
                     VersionAndTag {

@@ -1,6 +1,6 @@
 use std::fmt;
 
-use semver::Version;
+use crate::semver::SemVer;
 
 use crate::{
     cli::VersionCommand,
@@ -53,9 +53,9 @@ impl VersionCommand {
     fn find_bump_version(
         &self,
         last_v_tag: &str,
-        mut last_version: Version,
+        mut last_version: SemVer,
         parser: &CommitParser,
-    ) -> Result<(Version, Label), Error> {
+    ) -> Result<(SemVer, Label), Error> {
         let prefix = self.prefix.as_str();
         let git = GitHelper::new(prefix)?;
         let mut revwalk = git.revwalk()?;
@@ -69,7 +69,7 @@ impl VersionCommand {
         let mut minor = false;
         let mut patch = false;
 
-        let major_version_zero = last_version.major == 0;
+        let major_version_zero = last_version.is_pre_major();
 
         for commit in i {
             if commit.breaking {
